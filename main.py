@@ -28,7 +28,12 @@ if __name__ == '__main__':
 
 		mot_tracker = AB3DMOT() 
 		seq_dets = np.loadtxt(seq_file, delimiter=',')          # load detections, N x 15
-		
+		# print(seq_file)
+		# print(seq_dets)
+		print(seq_dets.shape)
+		# print(len(seq_dets.shape))
+		break
+
 		# if no detection in a sequence
 		if len(seq_dets.shape) == 1: seq_dets = np.expand_dims(seq_dets, axis=0) 	
 		if seq_dets.shape[1] == 0:
