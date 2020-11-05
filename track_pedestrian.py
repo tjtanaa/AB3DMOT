@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     print("========================== Data Loading =======================")
     print("Database path \t: ", dataset_config['database_path'])
-    dataset = MTR_Dataset(dataset_config['database_path'])
+    dataset = MTR_Dataset_Base(dataset_config['database_path'])
     # print("data path \t: ", datapath)
     # print("annotation path \t: ", labelpath)
 
@@ -47,10 +47,14 @@ if __name__ == '__main__':
 
         mot_tracker = AB3DMOT() 
         # seq_dets = np.loadtxt(seq_file, delimiter=',')          # load detections, N x 15
-        seq_dets = dataset.load_by_directory()
+        seq_dets, annotation_filename_list, _ = dataset.load_annotations_by_directory()
         # print(seq_file)
         seq_dets = np.array(seq_dets)
         # print(seq_dets)
+        
+        point_cloud_filename_list, _ = dataset.load_filenames_by_directory()
+        point_cloud  = dataset._load_single_point_cloud(point_cloud_filename_list[0])
+        print(point_cloud.shape)
         break
 
         # if no detection in a sequence

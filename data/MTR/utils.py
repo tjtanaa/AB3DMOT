@@ -2,6 +2,8 @@ import os
 import sys
 import json
 import numpy as np
+from typing import List, Set, Dict, Tuple, Optional, Any
+from typing import Callable, Iterator, Union, Optional, List
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
@@ -10,24 +12,65 @@ sys.path.append('/home/tjtanaa/Documents/Github/AB3DMOT')
 
 from data.MTR.config import config
 
-def id2str(id):
+def id2str(id: int) -> str:
+    """ This is a function that maps the id to the string. 
+        Its definition is declared in the config.py
+
+    Args:
+        id (int): The id of the object type
+
+    Returns:
+        str: The string of the object type
+    """
     return config['class_map'][id]
 
-def str2id(classname):
+def str2id(classname: str) -> int:
+    """This is a function that maps the string of the object type to its id.
+       The mapping is defined in the config.py
+
+    Args:
+        classname (str): The string of the object type  
+
+    Returns:
+        int: The id of the object type
+    """
     str2id_map = {v: k for k, v in config['class_map'].items()}
     return str2id_map[classname]
 
-def sort_list(directory_list, charbefore=20):
+def sort_list(directory_list: List[str], charbefore:int = 20) -> List[str]:
+    """This is a custom sort function that is used to sort the filename
+        of the AKK dataset, which has a variable filename.
 
+    Args:
+        directory_list (list[str]): [description]
+        charbefore (int, optional): [description]. Defaults to 20.
+    """
     def func(x):
         return x[:charbefore]+x[charbefore:][:-4].zfill(4)
     return sorted(directory_list,key=func)
 
 
-def load_directory_list_from_path(path, suffix='_dir'):
-    """
-        @return:
-            A list containing absolute path to directories
+def load_absolute_directory_list_from_path(path: str, suffix: str ='_dir') -> List[str]:
+    """This is a function to aggregate the directories with suffix in the 'path'
+       into a list, in absolute path format.
+       
+       [Note]
+       The difference between this function `load_directory_list_from_path`
+       and `load_filenames_from_path` is that
+       `load_directory_list_from_path` only aggregates the path to the child directory
+       `load_filenames_from_path` aggregates the path to all the files containing in the
+        child directory
+
+    Args:
+        path (str): Absolute path of the directory of interest
+        suffix (str, optional): The directory with suffix is aggregated, else discarded. 
+                                Defaults to '_dir'.
+
+    Raises:
+        FileNotFoundError: The `path` does not exists
+
+    Returns:
+        List[str]: A list of absolute path to the directories with suffix.
     """
     directory_list = []
     if(os.path.exists(path)):
@@ -38,10 +81,59 @@ def load_directory_list_from_path(path, suffix='_dir'):
     
     return directory_list
 
-def load_filenames_from_path(path, extension='.bin'):
-    """
-        helper function to aggregate the filenames into a single list containing <absolute path to the file>
+def load_directory_list_from_path(path: str, suffix: str ='_dir') -> List[str]:
+    """This is a function to aggregate the directories with suffix in the 'path'
+       into a list, in absolute path format.
+       
+       [Note]
+       The difference between this function `load_directory_list_from_path`
+       and `load_filenames_from_path` is that
+       `load_directory_list_from_path` only aggregates the path to the child directory
+       `load_filenames_from_path` aggregates the path to all the files containing in the
+        child directory
 
+    Args:
+        path (str): Absolute path of the directory of interest
+        suffix (str, optional): The directory with suffix is aggregated, else discarded. 
+                                Defaults to '_dir'.
+
+    Raises:
+        FileNotFoundError: The `path` does not exists
+
+    Returns:
+        List[str]: A list of absolute path to the directories with suffix.
+    """
+    directory_list = []
+    if(os.path.exists(path)):
+        directory_list = [directory for directory in os.listdir(path)
+                                if (os.path.isdir(os.path.join(path, directory)) and suffix in directory) ]
+    else:
+        raise FileNotFoundError
+    
+    return directory_list
+
+def load_filenames_from_path(path: str, extension: str ='.bin') -> List[str]:
+    """This is a function to aggregate the filenames with suffix in the child 
+        directory of 'path' into a list, in absolute path format.
+
+        [Note]
+        The difference between this function `load_directory_list_from_path`
+        and `load_filenames_from_path` is that
+        `load_directory_list_from_path` only aggregates the path to the child directory
+        `load_filenames_from_path` aggregates the path to all the files containing in the
+        child directory
+
+    Args:
+        path (str): Absolute path of the directory of interest
+        extension (str, optional): The filenames with suffix is aggregated, else discarded. 
+                                Defaults to '.bin'.
+
+    Raises:
+        FileNotFoundError: The `path` does not exists
+
+    Returns:
+        List[str]: A list of absolute path to the filenames 
+                    (within the child directories of `path`) with suffix.
     """
     sorted_filenames_list = []
     if(os.path.exists(path)):
@@ -62,24 +154,56 @@ def load_filenames_from_path(path, extension='.bin'):
     
     return sorted_filenames_list
 
-def load_data_filenames_from_path(path):
-    """
-        aggregate the filenames into a single list containing <absolute path to the file>
+def load_data_filenames_from_path(path: str) -> List[str]:
+    """ This is a function to load a list of absolute path to the filenames 
+        (within the child directories of `path`) with suffix `.bin`.
 
+        [Note]
+        `data_filenames` refers to the binary data storing the point cloud
+        ALL the input point cloud are store in binary
+
+    Args:
+        path (str): Absolute path to the directory which stores the binary of
+                    point cloud. Expected path : `<path to the database>/Data/`
+
+    Returns:
+        List[str]: A list of absolute path to the filenames 
+                    (within the child directories of `path`) with suffix `.bin`.
     """
-    
     return load_filenames_from_path(path, extension='.bin')
 
-def load_annotation_filenames_from_path(path):
-    """
-        aggregate the filenames into a single list containing <absolute path to the file>
+def load_annotation_filenames_from_path(path: str) -> List[str]:
+    """This is a function to load a list of absolute path to the filenames 
+        (within the child directories of `path`) with suffix `.json`.
+
+        [Note]
+        `annotation` refers to the ground truth label of bounding boxes
+
+    Args:
+        path (str): Absolute path to the directory which stores the binary of
+                    point cloud. Expected path : `<path to the database>/Label/`
+
+    Returns:
+        List[str]: A list of absolute path to the filenames 
+                    (within the child directories of `path`) with suffix `.json`.
     """
     return load_filenames_from_path(path, extension='.json')
 
-def load_filenames_from_directory(directory_path, extension='.bin'):
-    """
-        @params:
-        directory_path: absolute path to the directory
+def load_filenames_from_directory(directory_path: str, extension: str='.bin') -> List[str]:
+    """This is a function that takes in an absolute path to directories
+       and aggregates the files with the extension (e.g. `/bin`) from the directory
+       into a list , in absolute path format
+
+    Args:
+        directory_path ([type]): [description]
+        extension (str, optional): [description]. Defaults to '.bin'.
+
+    Raises:
+        FileNotFoundError: The directory path does not exists
+
+    Returns:
+        List[str]: A list of absolute path to the filenames 
+                    (within the child directories of `path`) with suffix `.bin`.
     """
     sorted_filenames_list = []
     if(os.path.exists(directory_path)):
@@ -97,9 +221,12 @@ def load_filenames_from_directory(directory_path, extension='.bin'):
     return sorted_filenames_list
 
 
-def load_annotations_from_file_in_mtr_format(filepath):
     """
-        filepath is the absolute path to the annotations
+    """
+def load_annotations_from_file_in_mtr_format(filepath: str) -> List[Union[str, int, float]]:
+    """ This is a function to load the annotations
+
+        [Note]
 
         MTR data format
         #Values    Name      Description
@@ -110,6 +237,13 @@ def load_annotations_from_file_in_mtr_format(filepath):
         3    dimensions   3D object dimensions: height, width, length (in meters)
         3    location     3D object location x,y,z in camera coordinates (in meters)
         1    rotation_y   Rotation ry around Y-axis in camera coordinates [-pi..pi]
+
+    Args:
+        filepath (str): The absolute path to the annotations
+
+
+    Returns:
+        List[Union[str, int, float]]: List of annotations with the attribute show in the Note
     """
     with open(filepath, 'r') as f:
         json_obj = json.load(f)
@@ -150,10 +284,13 @@ def load_annotations_from_file_in_mtr_format(filepath):
             annotation_list.append(annotation)
         return annotation_list
 
-def load_annotations_from_file_in_kittimot_format(filepath, frame_id):
     """
-        filepath is the absolute path to the annotations
+    """
+def load_annotations_from_file_in_kittimot_format(filepath: str, frame_id: int) -> List[Union[str, int, float]]:
+    """ This is the function that directly loads the MTR annotations into kitti mot format
 
+        [Note]
+        From https://github.com/pratikac/kitti/blob/master/readme.tracking.txt
         kitti MOTS data format
         #Values    Name      Description
         ----------------------------------------------------------------------------
@@ -178,6 +315,12 @@ def load_annotations_from_file_in_kittimot_format(filepath, frame_id):
         1    rotation_y   Rotation ry around Y-axis in camera coordinates [-pi..pi]
         1    score        Only for results: Float, indicating confidence in
                             detection, needed for p/r curves, higher is better.
+    Args:
+        filepath (str): The absolute path to the annotations
+        frame_id (int): The assigned frame number to the annotation files loaded
+
+    Returns:
+        List[Union[str, int, float]]: List of annotations with the attribute show in the Note
     """
     with open(filepath, 'r') as f:
         json_obj = json.load(f)
@@ -218,10 +361,17 @@ def load_annotations_from_file_in_kittimot_format(filepath, frame_id):
         return annotation_list
 
 
-def convert_mtr_to_kittimot_format(data_list, frame_id):
+
     """
         filepath is the absolute path to the annotations
 
+    """
+
+def convert_mtr_to_kittimot_format(data_list: List[Union[str, int, float]], frame_id: int) -> List[Union[str, int, float]]:
+    """ This is the function that converts the MTR annotations into kitti mot format
+
+        [Note]
+        From https://github.com/pratikac/kitti/blob/master/readme.tracking.txt
         kitti MOTS data format
         #Values    Name      Description
         ----------------------------------------------------------------------------
@@ -246,6 +396,13 @@ def convert_mtr_to_kittimot_format(data_list, frame_id):
         1    rotation_y   Rotation ry around Y-axis in camera coordinates [-pi..pi]
         1    score        Only for results: Float, indicating confidence in
                             detection, needed for p/r curves, higher is better.
+    Args:
+        data_list (List[Union[str, int, float]]): List of annotations with the attribute show in 
+                                                the Note of function `load_annotations_from_file_in_mtr_format`
+        frame_id (int): The assigned frame number to the annotation files loaded
+
+    Returns:
+        List[Union[str, int, float]]: List of annotations with the attribute show in the Note
     """
     annotation_list = []
     track_id = -1
@@ -272,20 +429,33 @@ def convert_mtr_to_kittimot_format(data_list, frame_id):
         annotation_list.append(annotation)
     return annotation_list
 
-def convert_kittimot_to_ab3dmot_format(data_list):
+
+
     """
         convert KITTI MOTS format to AB3DMOT format
 
+        
+        @params:
+        data_list: a list containing data in KITTI MOTs format
+    """
+
+def convert_kittimot_to_ab3dmot_format(data_list: List[Union[str, int, float]]) -> List[Union[str, int, float]]:
+    """This is the function that converts the kitti mot format annotations into ab3dmot format
+
+        [Note]
+        From https://github.com/xinshuoweng/AB3DMOT.git
         AB3DMOT format
         =============================================================================================
         Frame	Type	2D BBOX (x1, y1, x2, y2)	Score	3D BBOX (h, w, l, x, y, z, rot_y)	Alpha
         0	2 (car)	726.4, 173.69, 917.5, 315.1	13.85	1.56, 1.58, 3.48, 2.57, 1.57, 9.72, -1.56	-1.82
 
+    Args:
+        data_list (List[Union[str, int, float]]): List of annotations with the attribute show in the Note
+                                                of function `convert_mtr_to_kittimot_format`
 
-        @params:
-        data_list: a list containing data in KITTI MOTs format
+    Returns:
+        List[Union[str, int, float]]: List of annotations with the attribute show in the Note
     """
-
     ab3dmot_data_list = []
 
     for data in data_list:
