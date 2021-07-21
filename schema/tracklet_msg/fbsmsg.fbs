@@ -1,0 +1,39 @@
+enum Class:byte { 
+    PrivateCars = 0,
+    DoubleDeckerBus = 1,
+    SingleDeckerBus = 2,
+    Taxi = 3,
+    MiniBus = 4,
+    Vans = 5,
+    LightTrucks = 6,
+    Motorbikes = 7,
+    CraneTruck = 8,
+    CylindricalTruck = 9}
+
+struct Bbox {
+  x:float32;
+  y:float32;
+  z:float32;
+  h:float32;
+  w:float32;
+  l:float32;
+  rot_y:float32;
+}
+
+table Tracklet {
+  track_id:uint64;
+  bbox:Bbox;
+  classid:uint16;
+  score:float32;
+  classscore:float32;
+}
+
+table TrackletsPacket {
+  frame_id:uint16;
+  count:uint16;
+  lidarts_ms:float64;
+  unixts_ms:float64;
+  tracklets:[Tracklet];
+}
+
+root_type TrackletsPacket;
